@@ -59,5 +59,13 @@ def health():
     return {"status":"ok","service":"CyberTrail Investigation Search"}
 
 
+@app.after_request
+def add_cache_headers(response):
+    """Never let browsers/proxies serve a stale UI build."""
+    if response.mimetype in {"text/html", "text/css", "application/javascript", "text/javascript"}:
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+    return response
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
