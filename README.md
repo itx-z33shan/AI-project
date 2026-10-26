@@ -27,6 +27,18 @@ Open http://127.0.0.1:5000. No external APIs, credentials, or database are requi
 5. Compare link count, estimated review cost, expanded nodes, runtime, and algorithm guarantee.
 6. Hover over graph edges for relationship, sample cost, and synthetic confidence metadata.
 
+### Interface features
+
+- **Dark SOC-console dashboard** — three-panel layout: controls, animated evidence graph, and live results.
+- **Interactive SVG graph** — typed nodes with icons and per-type colors, directed edges with review-cost pills, pan/drag, wheel zoom and fit-to-screen.
+- **Node actions** — click any node (or focus it and press Enter) to set it as the start or target; a swap button exchanges endpoints.
+- **Step-by-step traversal animation** — nodes flash amber as they are expanded and the final route draws in teal; speed ranges from Slow to Turbo and every run can be replayed.
+- **Compare-all table** — all six methods side by side with the best cost / fewest expansions / fastest runtime highlighted; click any row to replay that algorithm's traversal.
+- **Failure is visible** — when Hill Climbing hits a dead end or local optimum, the stuck node pulses red and a banner explains why.
+- **Edge inspector** — hover any edge for its telemetry relationship, illustrative review cost, and color-coded synthetic confidence.
+- **Responsive and accessible** — keyboard-focusable controls, ARIA roles/live regions, toasts for API validation errors, and a stacked layout on narrow screens.
+- **Zero front-end build step** — vanilla HTML/CSS/JS with no CDN or external runtime dependencies, so it works fully offline once Flask is running.
+
 ## Problem formulation
 
 - **Initial state:** selected alert/evidence node.
@@ -46,6 +58,8 @@ Open http://127.0.0.1:5000. No external APIs, credentials, or database are requi
 | Greedy Best-First | Estimated remaining hops `h(n)` | Goal-directed but may ignore effort already spent |
 | A* | `f(n)=g(n)+h(n)` | Least-cost path with the admissible heuristic |
 | Hill Climbing | Locally closer-looking adjacent node | Low-memory local search; can follow a decoy into a dead end |
+
+> **Hill Climbing cue:** unlike Greedy and A*, Hill Climbing does not use the reverse-graph hop heuristic. It moves to the adjacent node with the smallest on-screen (geometric) distance to the target, which is exactly how a visually convincing decoy node can lure it into a dead end in the `phishing-finance` scenario.
 
 ## API
 
@@ -68,4 +82,3 @@ python -m unittest discover -s tests -v
 ```
 
 The tests cover all six methods, BFS-versus-UCS trade-offs, UCS/A* optimal-cost agreement, Hill Climbing local-optimum behavior, unreachable goals, API validation, and health checks.
-# AI-project

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberTrail — AI-Assisted Cyber Investigation Search</title>
+  <meta name="description" content="Interactive comparison of BFS, DFS, UCS, Greedy, A* and Hill Climbing over a synthetic evidence graph." />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232dd4bf' stroke-width='2'%3E%3Cpath d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="app">
+    <!-- ════════════════════════════ Top bar ════════════════════════════ -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>CyberTrail</h1>
+          <span class="brand-sub">AI-Assisted Investigation Search</span>
+        </div>
+        <span class="course-badge">CSC262</span>
+      </div>
+
+      <div class="topbar-status">
+        <span class="status-dot" id="health-dot" title="API health"></span>
+        <span id="health-label">Checking API…</span>
+      </div>
+    </header>
+
+    <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <!-- ════════════════════════════ Main layout ════════════════════════════ -->
+    <main class="layout">
+      <!-- ─────────────── Control sidebar ─────────────── -->
+      <aside class="sidebar panel" aria-label="Investigation controls">
+        <section class="control-block">
+          <h2 class="block-title">
+            <span class="step-num">1</span> Investigation scenario
+          </h2>
+          <div class="scenario-list" id="scenario-list" role="list"></div>
+        </section>
+
+        <section class="control-block">
+          <h2 class="block-title">
+            <span class="step-num">2</span> Evidence endpoints
+          </h2>
+          <div class="field">
+            <label for="start-select"><span class="dot dot-source"></span> Start alert</label>
+            <div class="select-row">
+              <select id="start-select"></select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="goal-select"><span class="dot dot-goal"></span> Target asset</label>
+            <div class="select-row">
+              <select id="goal-select"></select>
+              <button class="icon-btn" id="swap-btn" type="button" title="Swap start and target" aria-label="Swap start and target">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+              </button>
+            </div>
+          </div>
+          <p class="field-hint">Tip: click any node on the graph to assign it.</p>
+        </section>
+
+        <section class="control-block">
+          <h2 class="block-title">
+            <span class="step-num">3</span> Search algorithm
+          </h2>
+          <div class="algo-list" id="algo-list" role="radiogroup" aria-label="Algorithm"></div>
+        </section>
+
+        <section class="control-block">
+          <div class="action-row">
+            <button class="btn btn-primary" id="run-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              Run search
+            </button>
+            <button class="btn btn-ghost" id="compare-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+              Compare all
+            </button>
+          </div>
+
+          <div class="anim-control">
+            <label for="speed-range">Animation speed
+              <span class="mono" id="speed-label">Normal</span>
+            </label>
+            <input type="range" id="speed-range" min="1" max="10" value="5" />
+            <button class="btn btn-ghost btn-block" id="replay-btn" type="button" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              Replay animation
+            </button>
+          </div>
+        </section>
+
+        <section class="control-block legend-block">
+          <h2 class="block-title plain">Legend</h2>
+          <ul class="legend" id="legend-list"></ul>
+          <ul class="legend legend-flags">
+            <li><span class="swatch swatch-source"></span> Start node</li>
+            <li><span class="swatch swatch-goal"></span> Target asset</li>
+            <li><span class="swatch swatch-explored"></span> Expanded during search</li>
+            <li><span class="swatch swatch-path"></span> Selected route</li>
+          </ul>
+        </section>
+      </aside>
+
+      <!-- ─────────────── Graph stage ─────────────── -->
+      <section class="stage" aria-label="Evidence graph">
+        <div class="stage-toolbar">
+          <div class="crumb" id="crumb">
+            <span class="crumb-muted">No scenario loaded</span>
+          </div>
+          <div class="zoom-controls">
+            <button class="icon-btn" id="zoom-in-btn" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+            <button class="icon-btn" id="zoom-out-btn" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+            <button class="icon-btn" id="zoom-fit-btn" type="button" title="Fit graph to screen" aria-label="Fit graph to screen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="canvas-wrap" id="canvas-wrap">
+          <svg id="graph-svg" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Synthetic telemetry evidence graph">
+            <defs>
+              <marker id="arrow-default" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0L10 5L0 10z" fill="#475569"/>
+              </marker>
+              <marker id="arrow-explored" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0L10 5L0 10z" fill="#fbbf24"/>
+              </marker>
+              <marker id="arrow-path" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0L10 5L0 10z" fill="#2dd4bf"/>
+              </marker>
+
+              <filter id="teal-glow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="3.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+
+              <!-- Node type icons (stroke = currentColor) -->
+              <symbol id="icon-alert" viewBox="0 0 24 24">
+                <path d="M12 3l9.5 17h-19z"/><path d="M12 10v4"/><path d="M12 17.5v.1"/>
+              </symbol>
+              <symbol id="icon-endpoint" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>
+              </symbol>
+              <symbol id="icon-account" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/>
+              </symbol>
+              <symbol id="icon-network" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.6 3 14.4 0 18M12 3c-3 3.6-3 14.4 0 18"/>
+              </symbol>
+              <symbol id="icon-evidence" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="7"/><path d="M12 5v14M5 9H2.5M5 15H2.5M21.5 9H19M21.5 15H19M9 5L7 2.5M15 5l2-2.5"/>
+              </symbol>
+              <symbol id="icon-server" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/>
+              </symbol>
+              <symbol id="icon-storage" viewBox="0 0 24 24">
+                <ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>
+              </symbol>
+              <symbol id="icon-app" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/>
+              </symbol>
+              <symbol id="icon-asset" viewBox="0 0 24 24">
+                <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>
+              </symbol>
+            </defs>
+
+            <g id="viewport">
+              <g id="edges-layer"></g>
+              <g id="cost-labels-layer"></g>
+              <g id="nodes-layer"></g>
+            </g>
+          </svg>
+
+          <!-- Edge hover tooltip -->
+          <div class="tooltip" id="edge-tooltip" role="status" hidden></div>
+
+          <!-- Node click popover -->
+          <div class="node-popover" id="node-popover" hidden>
+            <div class="popover-title" id="popover-title">Node</div>
+            <button type="button" class="popover-btn" data-action="source">
+              <span class="dot dot-source"></span> Set as start
+            </button>
+            <button type="button" class="popover-btn" data-action="goal">
+              <span class="dot dot-goal"></span> Set as target
+            </button>
+          </div>
+
+          <!-- Empty / hint overlay -->
+          <div class="stage-hint" id="stage-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <p>Choose a scenario and press <strong>Run search</strong> to trace evidence.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────── Results panel ─────────────── -->
+      <aside class="results panel" aria-label="Search results">
+        <div class="results-header">
+          <h2>Results</h2>
+          <span class="results-meta" id="results-meta"></span>
+        </div>
+        <div class="results-body" id="results-body">
+          <div class="empty-state" id="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>
+            </svg>
+            <h3>No search yet</h3>
+            <p>Pick a scenario, endpoints and an algorithm, then run a single search or compare all six methods.</p>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true"></div>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>
