@@ -1,0 +1,2244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CyberTrail | Threat Investigation Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,800,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #060b14;
+      --bg-panel: #0b1423;
+      --bg-panel-alt: #101d2d;
+      --bg-hud: rgba(11, 20, 35, 0.92);
+      --border: #1b2b3f;
+      --border-focus: #38bdf8;
+      --text: #f1f5f9;
+      --text-muted: #cbd5e1;
+      --text-dim: #94a3b8;
+      --teal: #22d3ee;
+      --teal-glow: rgba(34, 211, 238, 0.32);
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+      --amber: #f59e0b;
+      --red: #f43f5e;
+      --red-glow: rgba(244, 63, 94, 0.32);
+      --red-bg: rgba(76, 16, 28, 0.94);
+      --green: #34d399;
+      --cyan: #22d3ee;
+      --font-sans: "Satoshi", "Inter", "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at 70% -10%, #16263d 0%, #060b14 55%);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+      /* Topbar */
+      .topbar {
+        height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        background: linear-gradient(90deg, #08141f 0%, #09131e 100%);
+        border-bottom: 1px solid #1f3242;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        backdrop-filter: blur(12px);
+      }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .logo {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #1a5665;
+        border-radius: 10px;
+        background: radial-gradient(circle at 30% 30%, #16f3c4, #0e303f);
+        display: grid;
+        place-items: center;
+        color: #f8fffd;
+        font-size: 18px;
+        box-shadow: 0 0 18px var(--teal-glow);
+      }
+      .brand-name { font-size: 16px; font-weight: 800; letter-spacing: 0.8px; }
+      .brand-name span { color: var(--teal); }
+      .brand-sub {
+        display: block;
+        color: #7f93a7;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
+        font-weight: 800;
+        margin-top: 2px;
+      }
+      .topright { display: flex; align-items: center; gap: 18px; color: var(--text-muted); font-size: 11px; flex-wrap: wrap; justify-content: flex-end; }
+      .live-dot { color: var(--teal); animation: pulseDot 2s infinite ease-in-out; }
+      @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+      .user { padding-left: 14px; border-left: 1px solid #233446; color: #d6e2ec; font-weight: 600; }
+      .casefile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: 1px solid #26435a;
+        background: radial-gradient(circle, rgba(50,198,164,0.16), transparent);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        font-weight: 800;
+        color: #c9f5ec;
+      }
+      .casefile-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal-glow); }
+
+    /* Main Container */
+    .page { max-width: 1720px; width: 100%; margin: auto; padding: 24px 28px 48px; flex: 1; }
+    .intro { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+    .kicker { color: var(--teal); text-transform: uppercase; letter-spacing: 1.6px; font-size: 10px; font-weight: 800; }
+    .intro h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; margin: 6px 0 8px; }
+    .intro p { margin: 0; color: var(--text-muted); font-size: 13px; max-width: 680px; }
+    .badge {
+      border: 1px solid #26445a;
+      background: linear-gradient(90deg, rgba(50,198,164,0.12), transparent);
+      color: #b7d6e6;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab-btn {
+      border: 1px solid #23384a;
+      background: linear-gradient(180deg, rgba(19,36,54,0.9), rgba(12,20,31,0.9));
+      color: #b7c9dc;
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover { border-color: #3a5a77; color: #f1f7ff; }
+    .tab-btn.active {
+      border-color: rgba(50,198,164,0.7);
+      color: var(--teal);
+      box-shadow: 0 0 0 1px rgba(50,198,164,0.18), 0 10px 24px rgba(50,198,164,0.12);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Columns Layout */
+    .columns { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .panel {
+      background: radial-gradient(circle at top, rgba(48,70,94,0.22), transparent 60%), linear-gradient(160deg, var(--bg-panel), #0a131e);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.32);
+      backdrop-filter: blur(6px);
+    }
+    .controls { padding: 16px; position: sticky; top: 76px; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 0 0 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #c4d7e8;
+    }
+    .num {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: #11362e;
+      color: var(--teal);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .field { margin: 0 0 12px; }
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      color: #9cb0c2;
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .select {
+      width: 100%;
+      background: #08121c;
+      color: var(--text);
+      border: 1px solid #243546;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 10.5px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .select:focus { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(50, 198, 164, 0.2); }
+    .alginfo {
+      border-left: 2px solid var(--teal);
+      background: #0a1924;
+      padding: 9px 10px;
+      color: #8da5b8;
+      font-size: 9.5px;
+      line-height: 1.5;
+      margin-top: 8px;
+      border-radius: 0 5px 5px 0;
+      min-height: 52px;
+    }
+    .controls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .button {
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 11px;
+      font: inherit;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .button:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .button:disabled { opacity: 0.5; cursor: wait; transform: none; }
+    .primary {
+      background: linear-gradient(135deg, #108d75, #0c7561);
+      color: #f1fffb;
+      border-color: #1ea78e;
+      box-shadow: 0 4px 12px rgba(16, 141, 117, 0.3);
+    }
+    .secondary {
+      background: #132436;
+      color: #c2daf0;
+      border-color: #263d54;
+    }
+    .control-divider { height: 1px; background: #1a2a38; margin: 15px 0; }
+    .mini-title {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      font-weight: 800;
+      color: #6f869a;
+      margin-bottom: 8px;
+    }
+    .node-inspector {
+      padding: 10px;
+      border: 1px solid #233647;
+      background: #091520;
+      border-radius: 6px;
+      min-height: 75px;
+    }
+    .node-inspector strong { font-size: 10.5px; display: block; margin-bottom: 3px; }
+    .node-inspector p { color: #8a9eaf; font-size: 9.5px; line-height: 1.45; margin: 4px 0 6px; }
+    .microbuttons { display: flex; gap: 6px; margin-top: 6px; }
+    .micro {
+      background: #14273a;
+      color: #afd0ee;
+      border: 1px solid #284056;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 8.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .micro:hover { border-color: var(--blue); color: #fff; background: #1b354e; }
+    .source-target { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .source-target .field { margin-bottom: 0; }
+
+    /* Right Work Column */
+    .work { min-width: 0; }
+
+    /* Metric Cards */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    .metric {
+      padding: 11px 13px;
+      min-height: 64px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: #243547;
+    }
+    .metric:nth-child(1)::before { background: var(--teal); }
+    .metric:nth-child(2)::before { background: var(--blue); }
+    .metric:nth-child(3)::before { background: var(--amber); }
+    .metric:nth-child(4)::before { background: var(--purple); }
+    .mlabel { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.8px; color: #7f93a5; font-weight: 800; }
+    .mvalue { font-size: 19px; font-weight: 800; margin-top: 4px; color: #e9f1f7; font-family: var(--font-mono); }
+    .metric:nth-child(1) .mvalue { color: var(--teal); }
+    .metric:nth-child(2) .mvalue { color: var(--blue); }
+    .metric:nth-child(3) .mvalue { color: var(--amber); }
+    .metric:nth-child(4) .mvalue { color: var(--purple); }
+
+    /* Graph Panel */
+    .graph-panel { padding: 14px 16px; position: relative; }
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .graph-header h2 { margin: 0; font-size: 13px; font-weight: 700; }
+    .graph-header p { margin: 2px 0 0; color: #7f91a2; font-size: 9.5px; }
+    .toolbar { display: flex; gap: 7px; align-items: center; }
+    .smalltag {
+      border: 1px solid #203546;
+      background: #08141f;
+      border-radius: 5px;
+      color: #95acc0;
+      padding: 5px 9px;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    #startTag { border-color: rgba(50, 198, 164, 0.4); color: var(--teal); }
+    #goalTag { border-color: rgba(170, 139, 245, 0.4); color: var(--purple); }
+
+    /* Video Player HUD Controller */
+    .video-hud {
+      background: linear-gradient(180deg, rgba(16, 27, 40, 0.96), rgba(10, 18, 28, 0.96));
+      border: 1px solid #23374b;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+    .hud-controls-left { display: flex; align-items: center; gap: 6px; }
+    .hud-btn {
+      background: #132435;
+      color: #c9e0f3;
+      border: 1px solid #2a4157;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 9.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .hud-btn:hover { background: #1b354d; border-color: #3f6688; color: #fff; }
+    .hud-btn.primary-play {
+      background: linear-gradient(135deg, #108d75, #0c7561);
+      color: #fff;
+      border-color: #1ea78e;
+      box-shadow: 0 0 10px var(--teal-glow);
+    }
+    .hud-btn.primary-play.playing {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      border-color: #f39c12;
+      box-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+    }
+    .hud-timeline {
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .timeline-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      background: #112822;
+      color: var(--teal);
+      border: 1px solid rgba(50, 198, 164, 0.3);
+    }
+    .status-badge.paused {
+      background: #2b1f13;
+      color: var(--amber);
+      border-color: rgba(245, 175, 76, 0.3);
+    }
+    .status-badge.rejected-alert {
+      background: #2f1016;
+      color: var(--red);
+      border-color: rgba(255, 74, 90, 0.3);
+    }
+    .step-counter {
+      color: #9cb5cb;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+    }
+    .hud-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #142637;
+      outline: none;
+      cursor: pointer;
+    }
+    .hud-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--teal);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--teal);
+      border: 2px solid #08131d;
+      transition: transform 0.1s;
+    }
+    .hud-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .speed-group { display: flex; align-items: center; gap: 4px; }
+    .speed-group-title { font-size: 8.5px; font-weight: 800; color: #72879c; margin-right: 4px; }
+    .speed-pill {
+      background: #0f1c29;
+      color: #8fa5ba;
+      border: 1px solid #203548;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 8.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .speed-pill:hover { color: #fff; border-color: #355370; }
+    .speed-pill.active {
+      background: #163644;
+      color: var(--teal);
+      border-color: #278378;
+      box-shadow: 0 0 8px rgba(50, 198, 164, 0.25);
+    }
+
+    /* Live Telemetry Banner */
+    .telemetry-banner {
+      background: linear-gradient(90deg, #0f1f2e, #0c1824);
+      border: 1px solid #1e3346;
+      border-left: 3px solid var(--teal);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 10px;
+    }
+    .telemetry-main { display: flex; align-items: center; gap: 9px; flex: 1; }
+    .telemetry-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: #11342b;
+      color: var(--teal);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .telemetry-text { color: #c4d8e9; }
+    .telemetry-text b { color: #fff; font-weight: 700; }
+    .telemetry-legend { display: flex; gap: 10px; flex-shrink: 0; font-size: 8.5px; font-weight: 700; }
+    .badge-chosen-leg { color: var(--teal); display: flex; align-items: center; gap: 4px; }
+    .badge-rejected-leg { color: var(--red); display: flex; align-items: center; gap: 4px; }
+
+    /* Graph Canvas Wrap */
+    .graph-wrap {
+      height: 440px;
+      overflow: auto;
+      border: 1px solid #1a2a39;
+      border-radius: 6px;
+      background: radial-gradient(circle at 50% 50%, #0e1e30 0%, #091420 60%, #060e17 100%);
+      position: relative;
+    }
+    svg { display: block; width: 100%; height: 100%; min-width: 820px; }
+
+    /* SVG Edges Styling */
+    .edge {
+      stroke: #2b3e51;
+      stroke-width: 1.8;
+      fill: none;
+      opacity: 0.7;
+      transition: stroke 0.25s, stroke-width 0.25s, opacity 0.25s;
+      marker-end: url(#arrow);
+    }
+    .edge-group:hover .edge { stroke: #9eb6cc; opacity: 1; stroke-width: 2.2; }
+    
+    /* Active / Chosen Edge */
+    .edge.chosen {
+      stroke: var(--teal);
+      stroke-width: 3.2;
+      opacity: 1;
+      marker-end: url(#arrowChosen);
+      filter: drop-shadow(0 0 6px rgba(50, 198, 164, 0.7));
+      stroke-dasharray: 8 5;
+      animation: dashFlow 1s linear infinite;
+    }
+    @keyframes dashFlow {
+      from { stroke-dashoffset: 26; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* Final Optimal Route Edge */
+    .edge.final-route {
+      stroke: #36ebbc;
+      stroke-width: 4;
+      opacity: 1;
+      marker-end: url(#arrowRoute);
+      filter: drop-shadow(0 0 8px rgba(54, 235, 188, 0.85));
+    }
+
+    /* REJECTED Edge Styling */
+    .edge.rejected {
+      stroke: var(--red);
+      stroke-width: 2.6;
+      stroke-dasharray: 6 4;
+      opacity: 0.9;
+      marker-end: url(#arrowRejected);
+      filter: drop-shadow(0 0 4px rgba(255, 74, 90, 0.5));
+    }
+
+    /* Edge Cost Labels */
+    .edge-label-bg {
+      fill: #091520;
+      stroke: #22374a;
+      stroke-width: 1;
+      rx: 4;
+    }
+    .edge-label {
+      fill: #859bb0;
+      font-size: 9px;
+      font-family: var(--font-mono);
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-weight: 600;
+    }
+
+    /* Rejected Cross and Badge */
+    .cross-group {
+      cursor: pointer;
+    }
+    .cross-badge-circle {
+      fill: #22060b;
+      stroke: var(--red);
+      stroke-width: 2;
+      filter: drop-shadow(0 0 6px rgba(255, 74, 90, 0.6));
+    }
+    .cross-line {
+      stroke: #ffffff;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+
+    /* Reason Pill over Rejected Edge */
+    .reason-pill-bg {
+      fill: var(--red-bg);
+      stroke: #ff4a5a;
+      stroke-width: 1.2;
+      rx: 9;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5));
+    }
+    .reason-pill-text {
+      fill: #ffd6da;
+      font-size: 8.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Chosen Pill */
+    .chosen-pill-bg {
+      fill: rgba(7, 36, 29, 0.94);
+      stroke: var(--teal);
+      stroke-width: 1.2;
+      rx: 9;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5));
+    }
+    .chosen-pill-text {
+      fill: #bffff0;
+      font-size: 8.5px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Nodes */
+    .node { cursor: pointer; transition: transform 0.15s ease; }
+    .node rect {
+      fill: #0f1f2e;
+      stroke: #2c4256;
+      stroke-width: 1.5;
+      rx: 8;
+      transition: all 0.2s;
+    }
+    .node text { pointer-events: none; }
+    .node .n-title { fill: #e0ecf7; font-size: 10.5px; font-weight: 700; text-anchor: middle; }
+    .node .n-type { fill: #7891a7; font-size: 8.5px; text-anchor: middle; }
+    
+    .node.selected rect {
+      stroke: var(--amber);
+      stroke-width: 2.4;
+      filter: drop-shadow(0 0 10px rgba(245, 175, 76, 0.6));
+    }
+    .node.source rect {
+      stroke: var(--teal);
+      stroke-width: 2.6;
+      filter: drop-shadow(0 0 10px rgba(50, 198, 164, 0.65));
+    }
+    .node.target rect {
+      stroke: var(--purple);
+      stroke-width: 2.6;
+      filter: drop-shadow(0 0 10px rgba(170, 139, 245, 0.65));
+    }
+    .node.explored rect { fill: #132b40; stroke: #407b9e; }
+    .node.onroute rect {
+      fill: #0c3328;
+      stroke: #3be2b6;
+      stroke-width: 2.4;
+      filter: drop-shadow(0 0 12px rgba(59, 226, 182, 0.7));
+    }
+    .node:hover rect { stroke: #d0e4f7; stroke-width: 2; }
+
+    /* Active Expanding Radar Ring */
+    .expanding-radar {
+      fill: none;
+      stroke: var(--teal);
+      stroke-width: 2;
+      animation: radarWave 1.4s ease-out infinite;
+      pointer-events: none;
+    }
+    @keyframes radarWave {
+      0% { r: 35; opacity: 1; stroke-width: 3; }
+      100% { r: 68; opacity: 0; stroke-width: 1; }
+    }
+
+    /* Graph Legend */
+    .graph-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 10px 4px 2px;
+      color: #7b90a4;
+      font-size: 8.5px;
+    }
+    .leg { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+    .dot.alert { background: #ed6974; }
+    .dot.identity { background: var(--purple); }
+    .dot.asset { background: var(--green); }
+    .line-swatch { height: 3px; width: 16px; border-radius: 2px; }
+    .line-swatch.sw-teal { background: var(--teal); box-shadow: 0 0 6px var(--teal); }
+    .line-swatch.sw-red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+    /* Results Table Panel */
+    .results { margin-top: 12px; padding: 14px 16px; }
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .results-head h2 { margin: 0; font-size: 12px; font-weight: 700; }
+    .results-head span { font-size: 9.5px; color: #7f94a8; }
+    .table-wrap { overflow: auto; }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+      font-size: 9.5px;
+    }
+    .result-table th {
+      text-align: left;
+      color: #8397ab;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 700;
+      font-size: 8.5px;
+      padding: 8px 8px;
+      border-bottom: 1px solid #233749;
+    }
+    .result-table td {
+      padding: 9px 8px;
+      border-bottom: 1px solid #182838;
+      color: #b9c8d6;
+    }
+    .result-table tr:hover { background: #122131; cursor: pointer; }
+    .result-table tr.selected-row { background: #0e2922; border-left: 2px solid var(--teal); }
+    .algoname { font-weight: 700; color: #eaf1f7; }
+    .fam {
+      font-size: 7.5px;
+      color: #7a92a7;
+      background: #142434;
+      padding: 3px 6px;
+      border-radius: 999px;
+      margin-left: 5px;
+    }
+    .outcome {
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 8.5px;
+      font-weight: 600;
+      background: #102d26;
+      color: #6ee3ba;
+    }
+    .outcome.fail { background: #351a1d; color: #ff848f; }
+
+    /* Explanation & Concept */
+    .explain {
+      padding: 11px 14px;
+      margin-top: 12px;
+      border: 1px solid #1b3842;
+      background: #091c25;
+      border-radius: 7px;
+      display: flex;
+      gap: 10px;
+    }
+    .explain .icon {
+      width: 22px;
+      height: 22px;
+      flex: none;
+      display: grid;
+      place-items: center;
+      background: #113933;
+      color: var(--teal);
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .explain b { color: #ade2d8; font-size: 9.5px; }
+    .explain p { margin: 4px 0 0; color: #8ba2b4; font-size: 9.5px; line-height: 1.5; }
+    .empty {
+      border: 1px dashed #243647;
+      color: #7b90a3;
+      text-align: center;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 10.5px;
+    }
+
+    /* Toast */
+    .toast {
+      display: none;
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #0e2430;
+      color: #e5fbf5;
+      border: 1px solid #1e5a4d;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 10.5px;
+      font-weight: 600;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .footer { text-align: center; color: #5b6f82; font-size: 9px; padding: 14px 0; }
+
+    @media(max-width: 1100px) {
+      .columns { grid-template-columns: 260px 1fr; }
+      .graph-wrap { height: 400px; }
+    }
+    @media(max-width: 768px) {
+      .topbar { padding: 0 14px; }
+      .topright .user { display: none; }
+      .page { padding: 14px 10px; }
+      .intro { display: block; }
+      .columns { grid-template-columns: 1fr; }
+      .controls { position: relative; top: auto; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .graph-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .graph-wrap { height: 350px; }
+      .video-hud { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <!-- Topbar Header -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">⌘</div>
+      <div>
+        <div class="brand-name">CYBER<span>TRAIL</span></div>
+        <span class="brand-sub">AI-Assisted Cyber Investigation Lab</span>
+      </div>
+    </div>
+    <div class="topright">
+      <div class="casefile">
+        <span class="casefile-dot"></span>
+        <span>Incident CT-001 | Phishing → Finance DB | Status: In Progress</span>
+      </div>
+      <span><i class="live-dot">●</i> Forensic Graph Engine</span>
+      <span>CSC262 · Search Strategies Lab</span>
+      <span class="user">♙ SOC Analyst</span>
+    </div>
+  </header>
+
+  <!-- Page Body -->
+  <main class="page">
+    <section class="intro">
+      <div>
+        <div class="kicker">Security operations · Search strategies lab</div>
+        <h1>Trace the evidence. Watch algorithms think.</h1>
+        <p>Compare BFS, DFS, UCS, Greedy Best-First, A*, and Hill Climbing as they expand a synthetic cyber-evidence graph. See the frontier, visited set, and <code>g(n)/h(n)/f(n)</code> update step by step.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span class="badge">◈ &nbsp; Explainability-first investigation lab</span>
+        <button class="button secondary" onclick="startGuidedTour()" style="padding:8px 14px;">🎓 Take Guided Tour</button>
+        <button class="button secondary" onclick="exportLabReport()" style="padding:8px 14px;">📄 Export Lab Report</button>
+      </div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="investigation">🔍 Investigation</button>
+      <button class="tab-btn" data-tab="internals">🧠 AI Search Internals</button>
+      <button class="tab-btn" data-tab="theory">📚 AI Search Theory</button>
+      <button class="tab-btn" data-tab="comparison">⚖️ Comparison</button>
+      <button class="tab-btn" data-tab="challenge">🎯 Build-Your-Own Challenge</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-investigation">
+    <div class="columns">
+      <!-- Left Controls Panel -->
+      <aside class="panel controls">
+        <h2 class="section-title"><span class="num">1</span> AI Search Setup</h2>
+        
+        <div class="field">
+          <label for="scenario">Telemetry Scenario</label>
+          <select id="scenario" class="select"></select>
+        </div>
+
+        <div class="source-target">
+          <div class="field">
+            <label for="startNode">Source Alert</label>
+            <select id="startNode" class="select"></select>
+          </div>
+          <div class="field">
+            <label for="goalNode">Target Asset</label>
+            <select id="goalNode" class="select"></select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <label for="algorithm">AI Search Algorithm</label>
+          <select id="algorithm" class="select">
+            <option value="greedy">Greedy Best-First · heuristic guided AI search</option>
+            <option value="astar" selected>A* · informed AI search (g(n)+h(n))</option>
+          </select>
+          <div id="algInfo" class="alginfo">
+            A* is an informed AI search algorithm that minimizes f(n)=g(n)+h(n). The heuristic is an admissible lower bound for optimal, efficient pathfinding.
+          </div>
+        </div>
+
+        <div class="controls-row">
+          <button class="button primary" id="runBtn" onclick="runSelected()">
+            ▶ &nbsp; Run AI Search
+          </button>
+          <button class="button secondary" id="compareBtn" onclick="compareAll()">
+            ▤ &nbsp; Compare Greedy vs A*
+          </button>
+        </div>
+
+        <div class="control-divider"></div>
+
+        <div class="mini-title">Evidence Inspector</div>
+        <div id="inspector" class="node-inspector">
+          <strong>Click a node in the graph</strong>
+          <p>Inspect its telemetry metadata and quickly set it as source or target.</p>
+        </div>
+
+        <div class="control-divider"></div>
+
+        <div class="mini-title">AI Search Race Mode</div>
+        <p style="color:#8da3b8;font-size:9.5px;line-height:1.6;margin:0 0 10px;">Compare Greedy Best-First vs A* side by side to see informed AI search behavior.</p>
+        <div class="field">
+          <label for="raceA">Racer A</label>
+          <select id="raceA" class="select">
+            <option value="greedy">Greedy Best-First</option>
+            <option value="astar" selected>A*</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="raceB">Racer B</label>
+          <select id="raceB" class="select">
+            <option value="greedy" selected>Greedy Best-First</option>
+            <option value="astar">A*</option>
+          </select>
+        </div>
+        <button class="button secondary" onclick="runRace()" style="width:100%;">🏁 Run Algorithm Race</button>
+
+        <div class="control-divider"></div>
+
+        <div class="mini-title">Decision Guide</div>
+        <div style="color:#8da3b8;font-size:10px;line-height:1.7">
+          <b style="color:#32c6a4">✔ Green line:</b> Active/chosen evidence path.<br>
+          <b style="color:#ff4a5a">✖ Red line & cross:</b> Rejected/pruned path with explanation label.<br>
+          <b style="color:#bfd0df">Edge cost (m):</b> Estimated analyst review minutes, not probability of attack.<br>
+          <b style="color:#f5af4c">g(n)/h(n)/f(n):</b> Shown in AI Search Internals.
+        </div>
+      </aside>
+
+      <!-- Right Main Work Area -->
+      <section class="work">
+        <!-- 4 Summary Metric Cards -->
+        <div class="metrics">
+          <div class="panel metric">
+            <div class="mlabel">Selected Strategy</div>
+            <div class="mvalue" id="mAlgo">A*</div>
+          </div>
+          <div class="panel metric">
+            <div class="mlabel">Evidence Links</div>
+            <div class="mvalue" id="mHops">—</div>
+          </div>
+          <div class="panel metric">
+            <div class="mlabel">Review Effort</div>
+            <div class="mvalue" id="mCost">—</div>
+          </div>
+          <div class="panel metric">
+            <div class="mlabel">Nodes Expanded</div>
+            <div class="mvalue" id="mExpanded">—</div>
+          </div>
+        </div>
+
+        <!-- Graph Visualization Panel -->
+        <div class="panel graph-panel">
+          <div class="graph-header">
+            <div>
+              <h2 id="graphTitle">Synthetic evidence relationship graph</h2>
+              <p id="graphDescription">Directed telemetry relationships connecting detection anchors to protected assets.</p>
+            </div>
+            <div class="toolbar">
+              <span class="smalltag" id="startTag">SOURCE: —</span>
+              <span class="smalltag" id="goalTag">TARGET: —</span>
+            </div>
+          </div>
+
+          <!-- Video Playback Controller HUD -->
+          <div class="video-hud" id="videoHud">
+            <div class="hud-controls-left">
+              <button id="btnReplay" class="hud-btn" onclick="videoReplay()" title="Replay from start (R)">↺ Replay</button>
+              <button id="btnStepPrev" class="hud-btn" onclick="videoStepPrev()" title="Step Backward (Left Arrow)">⏮ Step</button>
+              <button id="btnPlayPause" class="hud-btn primary-play" onclick="videoTogglePlay()" title="Play / Pause (Space)">▶ Play</button>
+              <button id="btnStepNext" class="hud-btn" onclick="videoStepNext()" title="Step Forward (Right Arrow)">Step ⏭</button>
+            </div>
+
+            <div class="hud-timeline">
+              <div class="timeline-info">
+                <span id="playbackBadge" class="status-badge">STANDBY</span>
+                <span id="stepCounter" class="step-counter">Step 0 / 0</span>
+              </div>
+              <input type="range" id="videoScrubber" min="0" max="0" value="0" class="hud-slider" oninput="videoSeek(this.value)">
+            </div>
+
+            <div class="speed-group">
+              <span class="speed-group-title">SPEED:</span>
+              <button class="speed-pill" id="spdSlow" onclick="setSpeed('slow')">🐢 Slow</button>
+              <button class="speed-pill active" id="spdMed" onclick="setSpeed('medium')">⏱ Medium</button>
+              <button class="speed-pill" id="spdFast" onclick="setSpeed('fast')">⚡ Fast</button>
+            </div>
+          </div>
+
+          <!-- Live Telemetry Subtitle Banner -->
+          <div class="telemetry-banner" id="telemetryBanner">
+            <div class="telemetry-main">
+              <div class="telemetry-icon" id="telemetryIcon">⚡</div>
+              <div class="telemetry-text" id="telemetryText">
+                <b>Ready:</b> Run a search to see the video-like path tracing, branching decisions, and rejected link reasons.
+              </div>
+            </div>
+            <div class="telemetry-legend">
+              <span class="badge-chosen-leg">✔ Chosen Path</span>
+              <span class="badge-rejected-leg">✖ Pruned / Rejected</span>
+            </div>
+          </div>
+
+          <!-- SVG Graph Wrap -->
+          <div class="graph-wrap">
+            <svg id="graph" viewBox="0 0 1120 570" role="img" aria-label="Interactive synthetic security evidence graph">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b5368"/>
+                </marker>
+                <marker id="arrowChosen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#32c6a4"/>
+                </marker>
+                <marker id="arrowRoute" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#36ebbc"/>
+                </marker>
+                <marker id="arrowRejected" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff4a5a"/>
+                </marker>
+              </defs>
+              <g id="edgesLayer"></g>
+              <g id="crossLayer"></g>
+              <g id="nodesLayer"></g>
+            </svg>
+          </div>
+
+          <!-- Graph Legend -->
+          <div class="graph-legend">
+            <span class="leg"><i class="dot alert"></i>Alert / Event</span>
+            <span class="leg"><i class="dot identity"></i>Identity</span>
+            <span class="leg"><i class="dot"></i>Endpoint / Process / Network</span>
+            <span class="leg"><i class="dot asset"></i>Critical Asset</span>
+            <span class="leg"><span class="line-swatch sw-teal"></span>Chosen Route</span>
+            <span class="leg"><span class="line-swatch sw-red"></span>Rejected Path (with ✖ & reason)</span>
+            <span style="margin-left:auto">Click node to inspect · Keyboard shortcuts: [Space] Play/Pause, [←/→] Step, [R] Replay</span>
+          </div>
+        </div>
+
+        <!-- Search Results Table Panel -->
+        <div class="panel results">
+          <div class="results-head">
+              <h2>AI Search Results & Comparison</h2>
+            <span id="resultMeta">Run a strategy to inspect evidence paths</span>
+          </div>
+          <div id="resultsArea">
+            <div class="empty">Choose a source alert and target asset, then click <b>Run AI Search</b> or <b>Compare Greedy vs A*</b>.</div>
+          </div>
+        </div>
+
+        <!-- Conceptual Explanation Box -->
+        <div class="explain">
+          <div class="icon">i</div>
+          <div>
+            <b>CSC262 Core Concept · Search Problem Formulation</b>
+            <p id="concept">
+              States are evidence nodes; edges are observed telemetry transitions; source is initial state; target asset is goal test. 
+              Edge costs represent review effort. When expanding a state, algorithms accept promising leads and prune or reject worse branches.
+            </p>
+          </div>
+        </div>
+
+        <!-- Investigation Log -->
+        <div class="panel" style="margin-top:12px;padding:14px 16px;">
+          <div class="results-head" style="margin-bottom:10px;">
+            <h2>Investigation Log · Algorithm Reasoning</h2>
+            <span id="logMeta">Run a search to narrate each decision in plain English</span>
+          </div>
+          <div id="investigationLog" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto;">
+            <div class="empty" style="text-align:left;">No investigation steps yet. Select source/target and run a search to watch the algorithm explain its reasoning step by step.</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          CyberTrail · AI-Assisted Cyber Investigation Lab · Synthetic evidence graph only · No live endpoint attribution · Explainability-first
+        </div>
+      </section>
+    </div>
+    </div>
+
+    <!-- Tab: AI Search Internals -->
+    <div class="tab-panel" id="tab-internals">
+      <div class="columns" style="grid-template-columns: 360px minmax(0,1fr);">
+        <aside class="panel controls">
+          <h2 class="section-title"><span class="num">🧠</span> Informed AI Search</h2>
+          <p style="color:#8da3b8;font-size:10px;line-height:1.7;margin:0 0 14px;">Watch the actual frontier/queue/stack/heap and visited set update with each expansion step.</p>
+          <div class="mini-title">Frontier / Priority Queue</div>
+          <div id="frontierView" style="border:1px solid #233647;background:#091520;border-radius:6px;padding:10px;font-family:var(--font-mono);font-size:9.5px;color:#b9d4f0;min-height:90px;word-break:break-word;line-height:1.7;">—</div>
+          <div class="control-divider"></div>
+          <div class="mini-title">Visited / Closed Set</div>
+          <div id="visitedView" style="border:1px solid #233647;background:#091520;border-radius:6px;padding:10px;font-family:var(--font-mono);font-size:9.5px;color:#9ee7d2;min-height:70px;word-break:break-word;line-height:1.7;">{ }</div>
+          <div class="control-divider"></div>
+          <div class="mini-title">g(n) / h(n) / f(n) (Informed)</div>
+          <div id="gnfView" style="border:1px solid #233647;background:#091520;border-radius:6px;padding:10px;font-family:var(--font-mono);font-size:9.5px;color:#d9c8ff;min-height:80px;word-break:break-word;line-height:1.7;">Only shown for UCS/Greedy/A* as they expand.</div>
+          <div class="control-divider"></div>
+          <div class="mini-title">Heuristic Heatmap</div>
+          <p style="color:#8da3b8;font-size:9.5px;line-height:1.7;margin:0 0 10px;">Color nodes by h(n) = estimated hops × min cost to goal (warmer = closer).</p>
+          <label style="display:flex;align-items:center;gap:8px;color:#c9d7ea;font-size:10px;font-weight:600;"><input type="checkbox" id="heatmapToggle" onchange="toggleHeatmap(this.checked)"> Enable heuristic heatmap</label>
+        </aside>
+        <section class="work">
+          <div class="panel graph-panel">
+            <div class="graph-header">
+              <div>
+            <h2>AI Search Internals</h2>
+            <p>Watch priority queue, visited/closed sets and g(n)/h(n)/f(n) evaluation in sync with playback.</p>
+              </div>
+              <div class="toolbar">
+                <span class="smalltag" id="intAlgoTag">ALGO: —</span>
+                <span class="smalltag">Informed AI Search · g(n)=cost so far · h(n)=heuristic · f(n)=g+h</span>
+              </div>
+            </div>
+            <div class="graph-wrap">
+              <svg id="graphInternals" viewBox="0 0 1120 570"></svg>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Tab: Theory -->
+    <div class="tab-panel" id="tab-theory">
+      <div class="panel" style="padding:18px 22px;">
+        <div class="results-head" style="margin-bottom:14px;">
+          <h2>Informed AI Search · Greedy Best-First vs A*</h2>
+          <span>Focused on Heuristic Search for this lab</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
+          <div class="panel" style="padding:14px 16px;">
+            <h3 style="margin:0 0 8px;font-size:12px;">Greedy Best-First Search (Informed AI)</h3>
+            <p style="color:#8da3b8;font-size:10px;line-height:1.7;margin:0 0 10px;">Uses only heuristic h(n) to estimate distance to goal. Goal-directed but ignores accumulated cost g(n).</p>
+            <pre style="background:#091520;border:1px solid #233647;border-radius:6px;padding:10px;overflow:auto;font-size:9px;line-height:1.6;color:#b9d4f0;">1. Use priority queue ordered by h(n)
+2. Expand node with smallest h(n) first
+3. Follow heuristic toward goal
+4. Not guaranteed optimal</pre>
+          </div>
+          <div class="panel" style="padding:14px 16px;">
+            <h3 style="margin:0 0 8px;font-size:12px;">A* Search (Informed AI)</h3>
+            <p style="color:#8da3b8;font-size:10px;line-height:1.7;margin:0 0 10px;">Combines path cost and heuristic: f(n)=g(n)+h(n). With admissible heuristic, finds least-cost optimal path.</p>
+            <pre style="background:#091520;border:1px solid #233647;border-radius:6px;padding:10px;overflow:auto;font-size:9px;line-height:1.6;color:#b9d4f0;">1. Use priority queue ordered by f(n)=g(n)+h(n)
+2. Track best g(n) for each node
+3. Prune worse paths
+4. Optimal if h(n) is admissible</pre>
+          </div>
+          <div class="panel" style="padding:14px 16px;grid-column:1/-1;">
+            <h3 style="margin:0 0 8px;font-size:12px;">Key Difference</h3>
+            <p style="color:#8da3b8;font-size:10px;line-height:1.8;margin:0;">Greedy Best-First looks <b style="color:#f1f5f9;">ahead</b> only (heuristic). A* looks <b style="color:#f1f5f9;">behind + ahead</b> (actual cost + heuristic), making it more balanced and optimal in many cases.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Comparison -->
+    <div class="tab-panel" id="tab-comparison">
+      <div class="panel" style="padding:18px 22px;">
+        <div class="results-head" style="margin-bottom:14px;">
+          <h2>Greedy Best-First vs A* Comparison</h2>
+          <span>Informed AI Search comparison</span>
+        </div>
+        <div class="table-wrap">
+          <table class="result-table">
+            <thead>
+              <tr><th>Algorithm</th><th>Type</th><th>Evaluation</th><th>Optimal?</th><th>Uses g(n)?</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="algoname">Greedy Best-First</td><td>Informed AI Search</td><td>Min-Heap by h(n)</td><td>No</td><td>No (ignores path cost)</td><td>Goal-directed, faster but can be suboptimal</td></tr>
+              <tr><td class="algoname">A*</td><td>Informed AI Search</td><td>Min-Heap by f(n)=g(n)+h(n)</td><td>Yes (with admissible h)</td><td>Yes</td><td>Balances cost so far + estimate, finds least-cost path</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Challenge -->
+    <div class="tab-panel" id="tab-challenge">
+      <div class="panel" style="padding:18px 22px;">
+        <div class="results-head" style="margin-bottom:14px;">
+          <h2>Build-Your-Own Path Challenge</h2>
+          <span>Find the lowest review-effort path manually, then let algorithms reveal the answer</span>
+        </div>
+        <div style="display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start;">
+          <aside class="panel controls" style="position:static;">
+            <h2 class="section-title"><span class="num">🎯</span> Challenge Setup</h2>
+            <div class="field">
+              <label>Scenario</label>
+              <select id="challengeScenario" class="select"></select>
+            </div>
+            <div class="field">
+              <label>Start</label>
+              <select id="challengeStart" class="select"></select>
+            </div>
+            <div class="field">
+              <label>Goal</label>
+              <select id="challengeGoal" class="select"></select>
+            </div>
+            <button class="button primary" onclick="startChallenge()">Start Challenge</button>
+            <button class="button secondary" onclick="revealChallenge()" style="margin-top:8px;">Reveal Optimal (A*/UCS)</button>
+            <div class="control-divider"></div>
+            <div class="mini-title">Your Path</div>
+            <div id="challengePath" style="color:#b9d4f0;font-size:10px;line-height:1.8;">Click nodes in the challenge graph to build your route from start to goal.</div>
+            <div style="margin-top:10px;display:flex;gap:8px;">
+              <button class="micro" onclick="resetChallenge()">Reset</button>
+              <button class="micro" onclick="checkChallenge()">Check My Path</button>
+            </div>
+            <div id="challengeResult" style="margin-top:10px;color:#8da3b8;font-size:9.5px;line-height:1.7;"></div>
+          </aside>
+          <section class="work">
+            <div class="panel graph-panel">
+              <div class="graph-header">
+                <div>
+                  <h2>Challenge Graph</h2>
+                  <p>Click nodes in sequence starting from the challenge start. Try to minimize total review effort.</p>
+                </div>
+                <div class="toolbar">
+                  <span class="smalltag" id="challengeTags">START: — | GOAL: —</span>
+                </div>
+              </div>
+              <div class="graph-wrap">
+                <svg id="graphChallenge" viewBox="0 0 1120 570"></svg>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Race Modal -->
+    <div id="raceModal" style="display:none;position:fixed;inset:0;background:rgba(6,12,19,0.82);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;">
+      <div style="width:min(1500px,96vw);height:min(880px,92vh);background:radial-gradient(circle at top,rgba(48,70,94,0.24),transparent 60%),linear-gradient(160deg,#0d1723,#090f18);border:1px solid #26435a;border-radius:12px;box-shadow:0 40px 80px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #1f3242;">
+          <div>
+            <div style="text-transform:uppercase;letter-spacing:1.4px;font-size:9px;color:var(--teal);font-weight:800;">AI Search Race Mode</div>
+            <div style="font-size:14px;font-weight:800;margin-top:2px;">Head-to-Head: <span id="raceTitle">Greedy vs A*</span></div>
+          </div>
+          <button class="micro" onclick="closeRace()">✕ Close</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px;flex:1;min-height:0;">
+          <div class="panel" style="display:flex;flex-direction:column;min-height:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1f3242;">
+              <div style="font-weight:800;">Racer A · <span id="raceAName">A*</span></div>
+              <div style="font-family:var(--font-mono);font-size:9.5px;color:#9fb3c8;">Expanded: <span id="raceAExp">0</span> | Cost: <span id="raceACost">—</span></div>
+            </div>
+            <div class="graph-wrap" style="flex:1;min-height:0;">
+              <svg id="raceSvgA" viewBox="0 0 1120 570"></svg>
+            </div>
+          </div>
+          <div class="panel" style="display:flex;flex-direction:column;min-height:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1f3242;">
+              <div style="font-weight:800;">Racer B · <span id="raceBName">BFS</span></div>
+              <div style="font-family:var(--font-mono);font-size:9.5px;color:#9fb3c8;">Expanded: <span id="raceBExp">0</span> | Cost: <span id="raceBCost">—</span></div>
+            </div>
+            <div class="graph-wrap" style="flex:1;min-height:0;">
+              <svg id="raceSvgB" viewBox="0 0 1120 570"></svg>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-top:1px solid #1f3242;">
+            <div style="color:#8da3b8;font-size:10px;">Compare Greedy Best-First vs A* — see how informed AI search explores and selects paths.</div>
+          <div style="display:flex;gap:8px;">
+            <button class="hud-btn" onclick="raceReplay()">↺ Replay</button>
+            <button class="hud-btn primary-play" id="racePlayBtn" onclick="raceTogglePlay()">▶ Play</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'challenge') initChallenge();
+    });
+  });
+
+// Available algorithms and descriptions
+  const ALGS = ['greedy', 'astar'];
+  const descriptions = {
+    greedy: 'Greedy Best-First is an informed AI search that expands nodes by heuristic h(n) only, prioritizing estimated proximity to the goal.',
+    astar: 'A* is an informed AI search that expands nodes by f(n)=g(n)+h(n), balancing path cost so far with estimated distance to the goal for optimal results.'
+  };
+
+const SPEED_CONFIG = {
+  slow: { delay: 1400, label: 'Slow (1.4s)' },
+  medium: { delay: 650, label: 'Medium (0.65s)' },
+  fast: { delay: 220, label: 'Fast (0.22s)' }
+};
+
+let scenarios = [];
+let scenario = null;
+let results = {};
+let selectedNode = null;
+let activeAlgorithm = 'astar';
+
+// Video Playback Engine State
+let currentSpeed = 'medium';
+let playbackTrace = [];
+let playbackStepIndex = 0;
+let isPlaying = false;
+let playbackTimer = null;
+let currentRunResult = null;
+
+const byId = id => scenario.nodes.find(n => n.id === id);
+const colorType = t => {
+  switch (t) {
+    case 'Alert': return '#ed6974';
+    case 'Identity': return '#aa8bf5';
+    case 'Critical Asset': return '#48daab';
+    case 'Server': return '#51a9f5';
+    case 'Endpoint': return '#5eb2fc';
+    case 'Process': return '#f5af4c';
+    default: return '#55bed1';
+  }
+};
+
+// Initial Setup
+async function init() {
+  try {
+    const res = await fetch('/api/scenarios');
+    scenarios = await res.json();
+    scenario = scenarios[0];
+    document.querySelector('#scenario').innerHTML = scenarios.map(s => 
+      `<option value="${esc(s.id)}">${esc(s.name)}</option>`
+    ).join('');
+    renderScenario();
+    setupKeyboardShortcuts();
+  } catch (e) {
+    toast('Unable to load scenario: ' + e.message);
+  }
+}
+
+function renderScenario() {
+  selectedNode = null;
+  const sSel = document.querySelector('#startNode');
+  const gSel = document.querySelector('#goalNode');
+  const opts = scenario.nodes.map(n => `<option value="${esc(n.id)}">${esc(n.name)} · ${esc(n.type)}</option>`).join('');
+  sSel.innerHTML = opts;
+  gSel.innerHTML = opts;
+  sSel.value = scenario.start;
+  gSel.value = scenario.goal;
+  document.querySelector('#graphTitle').textContent = scenario.name;
+  document.querySelector('#graphDescription').textContent = scenario.description;
+  resetPlayback();
+  updateTags();
+  renderStaticGraph();
+}
+
+function updateTags() {
+  const sName = byId(document.querySelector('#startNode').value)?.name || '—';
+  const gName = byId(document.querySelector('#goalNode').value)?.name || '—';
+  document.querySelector('#startTag').textContent = 'SOURCE: ' + sName.toUpperCase();
+  document.querySelector('#goalTag').textContent = 'TARGET: ' + gName.toUpperCase();
+}
+
+// Draw static initial graph before search runs
+function renderStaticGraph() {
+  renderFrame({
+    exploredNodes: new Set([document.querySelector('#startNode').value]),
+    expandingNode: null,
+    edgeStates: {},
+    finalRoute: null,
+    isComplete: false
+  });
+}
+
+// Helper to extract frame state at any step index
+function getFrameStateForStep(res, stepIndex) {
+  const startId = document.querySelector('#startNode').value;
+  const explored = new Set([startId]);
+  const edgeStates = {};
+  const trace = res?.trace || [];
+
+  const maxIdx = Math.min(stepIndex, Math.max(0, trace.length - 1));
+  for (let i = 0; i <= maxIdx; i++) {
+    const s = trace[i];
+    if (s && s.node) explored.add(s.node);
+    if (s && s.evaluations) {
+      s.evaluations.forEach(ev => {
+        edgeStates[ev.from + '>' + ev.to] = ev;
+      });
+    }
+  }
+
+  const isComplete = stepIndex >= trace.length - 1;
+  const currentStep = trace[maxIdx];
+  return {
+    exploredNodes: explored,
+    expandingNode: isComplete ? null : currentStep?.node,
+    edgeStates: edgeStates,
+    finalRoute: (isComplete && res?.found) ? res.path : null,
+    isComplete: isComplete
+  };
+}
+
+// Reusable SVG renderer for main graph and race modal SVGs
+function renderSvgGraph(svgEl, frameState, sc, options) {
+  if (!svgEl || !sc) return;
+  const opts = options || {};
+
+  // Ensure layer groups exist
+  let edgesLayer = svgEl.querySelector('.edgesLayer');
+  let crossLayer = svgEl.querySelector('.crossLayer');
+  let nodesLayer = svgEl.querySelector('.nodesLayer');
+
+  if (!edgesLayer) {
+    // Add defs if missing
+    if (!svgEl.querySelector('defs')) {
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.innerHTML = `
+        <marker id="arrow_${svgEl.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b5368"/>
+        </marker>
+        <marker id="arrowChosen_${svgEl.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#32c6a4"/>
+        </marker>
+        <marker id="arrowRoute_${svgEl.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#36ebbc"/>
+        </marker>
+        <marker id="arrowRejected_${svgEl.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff4a5a"/>
+        </marker>
+      `;
+      svgEl.appendChild(defs);
+    }
+    edgesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    edgesLayer.setAttribute('class', 'edgesLayer');
+    svgEl.appendChild(edgesLayer);
+
+    crossLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    crossLayer.setAttribute('class', 'crossLayer');
+    svgEl.appendChild(crossLayer);
+
+    nodesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    nodesLayer.setAttribute('class', 'nodesLayer');
+    svgEl.appendChild(nodesLayer);
+  }
+
+  edgesLayer.innerHTML = '';
+  crossLayer.innerHTML = '';
+  nodesLayer.innerHTML = '';
+
+  const startId = document.querySelector('#startNode').value;
+  const goalId = document.querySelector('#goalNode').value;
+  const nodesMap = Object.fromEntries(sc.nodes.map(n => [n.id, n]));
+
+  // Track final path edges if search succeeded and reached end
+  const finalPathSet = new Set();
+  if (frameState.finalRoute && frameState.finalRoute.length > 0) {
+    for (let i = 0; i < frameState.finalRoute.length - 1; i++) {
+      finalPathSet.add(frameState.finalRoute[i] + '>' + frameState.finalRoute[i+1]);
+    }
+  }
+
+  // Draw Edges
+  sc.edges.forEach((e, idx) => {
+    const a = nodesMap[e.from];
+    const b = nodesMap[e.to];
+    if (!a || !b) return;
+
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+
+    const x1 = a.x + ux * 49;
+    const y1 = a.y + uy * 25;
+    const x2 = b.x - ux * 51;
+    const y2 = b.y - uy * 26;
+
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2 + (idx % 2 ? 8 : -8);
+
+    const edgeKey = e.from + '>' + e.to;
+    const isFinalRouteEdge = finalPathSet.has(edgeKey);
+    const edgeEvaluation = frameState.edgeStates ? frameState.edgeStates[edgeKey] : null;
+
+    let edgeClass = 'edge';
+    let markerId = `url(#arrow_${svgEl.id})`;
+    if (isFinalRouteEdge) {
+      edgeClass += ' final-route';
+      markerId = `url(#arrowRoute_${svgEl.id})`;
+    } else if (edgeEvaluation) {
+      if (edgeEvaluation.decision === 'rejected') {
+        edgeClass += ' rejected';
+        markerId = `url(#arrowRejected_${svgEl.id})`;
+      } else if (edgeEvaluation.decision === 'chosen') {
+        edgeClass += ' chosen';
+        markerId = `url(#arrowChosen_${svgEl.id})`;
+      }
+    }
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'edge-group');
+    g.innerHTML = `
+      <title>${esc(e.relation)} · review effort ${e.cost}m · confidence ${Math.round(e.confidence * 100)}%</title>
+      <path class="${edgeClass}" style="marker-end:${markerId}" d="M${x1},${y1} L${x2},${y2}"/>
+      <rect class="edge-label-bg" x="${midX - 12}" y="${midY - 7}" width="24" height="14"/>
+      <text class="edge-label" x="${midX}" y="${midY + 0.5}">${e.cost}m</text>
+    `;
+    edgesLayer.appendChild(g);
+
+    // If edge is rejected, render Cross & Reason Pill
+    if (edgeEvaluation && edgeEvaluation.decision === 'rejected' && !isFinalRouteEdge) {
+      renderRejectedMarker(crossLayer, midX, midY, edgeEvaluation.reason, e);
+    } else if (edgeEvaluation && edgeEvaluation.decision === 'chosen' && !isFinalRouteEdge) {
+      renderChosenMarker(crossLayer, midX, midY, edgeEvaluation.reason, e);
+    }
+  });
+
+  // Draw Nodes
+  sc.nodes.forEach(n => {
+    const isSource = n.id === startId;
+    const isGoal = n.id === goalId;
+    const isSelected = opts.interactive && (n.id === selectedNode);
+    const isExplored = frameState.exploredNodes && frameState.exploredNodes.has(n.id);
+    const isExpanding = frameState.expandingNode === n.id;
+    const isOnFinalRoute = frameState.finalRoute && frameState.finalRoute.includes(n.id);
+
+    const nodeG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    let classes = 'node';
+    if (isSource) classes += ' source';
+    if (isGoal) classes += ' target';
+    if (isSelected) classes += ' selected';
+    if (isExplored) classes += ' explored';
+    if (isOnFinalRoute) classes += ' onroute';
+
+    nodeG.setAttribute('class', classes);
+    nodeG.setAttribute('transform', `translate(${n.x - 52}, ${n.y - 27})`);
+
+    let innerContent = `
+      <title>${esc(n.name)} (${esc(n.type)})\n${esc(n.detail)}</title>
+      <rect width="104" height="54"/>
+      <circle cx="16" cy="16" r="4.5" fill="${colorType(n.type)}"/>
+      <text class="n-title" x="55" y="25">${esc(n.name)}</text>
+      <text class="n-type" x="55" y="41">${esc(n.type)}</text>
+    `;
+
+    if (isSource) {
+      innerContent += `<text x="4" y="-6" fill="#32c6a4" font-size="8.5" font-weight="800">SOURCE</text>`;
+    }
+    if (isGoal) {
+      innerContent += `<text x="64" y="-6" fill="#aa8bf5" font-size="8.5" font-weight="800">TARGET</text>`;
+    }
+
+    if (isExpanding) {
+      innerContent += `<circle class="expanding-radar" cx="52" cy="27" r="45"/>`;
+    }
+
+    nodeG.innerHTML = innerContent;
+    if (opts.interactive) {
+      nodeG.onclick = () => inspect(n.id);
+    }
+    nodesLayer.appendChild(nodeG);
+  });
+}
+
+// Main Frame Renderer for Playback
+function renderFrame(frameState) {
+  renderSvgGraph(document.querySelector('#graph'), frameState, scenario, { interactive: true });
+}
+
+// Render the Red Cross marker and floating Reason Pill over a rejected edge
+function renderRejectedMarker(container, cx, cy, reason, edge) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'cross-group');
+  
+  // Format short reason for the pill
+  let shortReason = reason || 'Pruned / Suboptimal';
+  if (shortReason.length > 34) {
+    shortReason = shortReason.substring(0, 32) + '…';
+  }
+
+  // Calculate approximate width needed for the pill
+  const pillWidth = Math.max(90, shortReason.length * 5.8 + 24);
+  const halfW = pillWidth / 2;
+
+  // Decide whether reason pill goes above or below based on position
+  const pillY = cy > 280 ? -18 : 22;
+
+  g.innerHTML = `
+    <!-- Glowing Cross Badge -->
+    <circle class="cross-badge-circle" cx="${cx}" cy="${cy}" r="9"/>
+    <line class="cross-line" x1="${cx - 3.5}" y1="${cy - 3.5}" x2="${cx + 3.5}" y2="${cy + 3.5}"/>
+    <line class="cross-line" x1="${cx + 3.5}" y1="${cy - 3.5}" x2="${cx - 3.5}" y2="${cy + 3.5}"/>
+    
+    <!-- Floating Reason Pill -->
+    <g transform="translate(${cx}, ${cy + pillY})">
+      <rect class="reason-pill-bg" x="${-halfW}" y="-9" width="${pillWidth}" height="18"/>
+      <text class="reason-pill-text" x="0" y="0">✖ ${esc(shortReason)}</text>
+    </g>
+    <title>REJECTED LINK: ${esc(edge.from)} → ${esc(edge.to)}\nReason: ${esc(reason)}\nReview Cost: ${edge.cost}m</title>
+  `;
+
+  container.appendChild(g);
+}
+
+// Render green checkmark pill over an active chosen branch
+function renderChosenMarker(container, cx, cy, reason, edge) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  let shortReason = reason || 'Active branch';
+  if (shortReason.length > 32) shortReason = shortReason.substring(0, 30) + '…';
+
+  const pillWidth = Math.max(80, shortReason.length * 5.6 + 22);
+  const halfW = pillWidth / 2;
+  const pillY = cy > 280 ? 22 : -18;
+
+  g.innerHTML = `
+    <!-- Floating Chosen Pill -->
+    <g transform="translate(${cx}, ${cy + pillY})">
+      <rect class="chosen-pill-bg" x="${-halfW}" y="-9" width="${pillWidth}" height="18"/>
+      <text class="chosen-pill-text" x="0" y="0">✔ ${esc(shortReason)}</text>
+    </g>
+    <title>CHOSEN BRANCH: ${esc(edge.from)} → ${esc(edge.to)}\nReason: ${esc(reason)}</title>
+  `;
+  container.appendChild(g);
+}
+
+// Video Playback Engine
+function setupPlayback(trace, result) {
+  playbackTrace = trace || [];
+  currentRunResult = result;
+  playbackStepIndex = 0;
+  
+  const scrubber = document.querySelector('#videoScrubber');
+  scrubber.max = Math.max(0, playbackTrace.length - 1);
+  scrubber.value = 0;
+  
+  updateScrubberUI();
+  renderPlaybackStep(0);
+  videoPlay();
+}
+
+function updateScrubberUI() {
+  const total = playbackTrace.length;
+  const current = total === 0 ? 0 : playbackStepIndex + 1;
+  document.querySelector('#stepCounter').textContent = `Step ${current} / ${total}`;
+  document.querySelector('#videoScrubber').value = playbackStepIndex;
+
+  const badge = document.querySelector('#playbackBadge');
+  if (isPlaying) {
+    badge.textContent = 'PLAYING';
+    badge.className = 'status-badge live';
+  } else if (playbackStepIndex >= total - 1 && total > 0) {
+    badge.textContent = 'COMPLETE';
+    badge.className = 'status-badge';
+  } else {
+    badge.textContent = 'PAUSED';
+    badge.className = 'status-badge paused';
+  }
+
+  const playBtn = document.querySelector('#btnPlayPause');
+  playBtn.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+  if (isPlaying) playBtn.classList.add('playing');
+  else playBtn.classList.remove('playing');
+}
+
+function renderPlaybackStep(stepIdx) {
+  if (!playbackTrace || playbackTrace.length === 0) return;
+  playbackStepIndex = Math.max(0, Math.min(stepIdx, playbackTrace.length - 1));
+  updateScrubberUI();
+
+  const currentStep = playbackTrace[playbackStepIndex];
+  const exploredNodes = new Set([document.querySelector('#startNode').value]);
+  const edgeStates = {};
+
+  // Accumulate decisions from step 0 to playbackStepIndex
+  for (let i = 0; i <= playbackStepIndex; i++) {
+    const s = playbackTrace[i];
+    if (s.node) exploredNodes.add(s.node);
+    if (s.evaluations) {
+      s.evaluations.forEach(ev => {
+        edgeStates[ev.from + '>' + ev.to] = ev;
+      });
+    }
+  }
+
+  const isFinalStep = playbackStepIndex === playbackTrace.length - 1;
+  const finalRoute = (isFinalStep && currentRunResult?.found) ? currentRunResult.path : null;
+
+  renderFrame({
+    exploredNodes: exploredNodes,
+    expandingNode: isFinalStep ? null : currentStep.node,
+    edgeStates: edgeStates,
+    finalRoute: finalRoute,
+    isComplete: isFinalStep
+  });
+
+  // Update Telemetry Banner
+  updateTelemetryBanner(currentStep, isFinalStep);
+}
+
+function addLogEntry(text, type='info') {
+  const log = document.querySelector('#investigationLog');
+  if (!log) return;
+  if (log.querySelector('.empty')) log.querySelector('.empty').remove();
+  const entry = document.createElement('div');
+  entry.style.cssText = 'border:1px solid #233647;background:linear-gradient(90deg,rgba(19,36,54,0.9),transparent);border-radius:6px;padding:8px 12px;font-size:10px;line-height:1.7;color:#c9d7ea;';
+  entry.innerHTML = text;
+  log.prepend(entry);
+  if (log.children.length > 40) log.lastChild.remove();
+}
+
+function updateTelemetryBanner(step, isFinalStep) {
+  const textEl = document.querySelector('#telemetryText');
+  const iconEl = document.querySelector('#telemetryIcon');
+
+  if (isFinalStep) {
+    if (currentRunResult?.found) {
+      iconEl.textContent = '✔';
+      iconEl.style.color = '#36ebbc';
+      iconEl.style.background = '#0d3b2e';
+      textEl.innerHTML = `<b>Target Reached!</b> Route verified to <b>${byId(currentRunResult.path.slice(-1)[0])?.name}</b> with total review effort of <b>${currentRunResult.review_cost}m</b> across <b>${currentRunResult.hops}</b> evidence links.`;
+      addLogEntry(`<b style="color:#32c6a4;">GOAL REACHED</b> · ${byId(currentRunResult.path.slice(-1)[0])?.name} found via ${activeAlgorithm.toUpperCase()} | Path: ${currentRunResult.path.map(id=>byId(id)?.name).join(' → ')} | Total: ${currentRunResult.review_cost}m`);
+    } else {
+      iconEl.textContent = '✖';
+      iconEl.style.color = '#ff4a5a';
+      iconEl.style.background = '#351117';
+      textEl.innerHTML = `<b>Search Halted:</b> ${esc(currentRunResult?.note || 'No route could be found to target asset.')}`;
+    }
+    return;
+  }
+
+  iconEl.textContent = '⚡';
+  iconEl.style.color = '#32c6a4';
+  iconEl.style.background = '#11342b';
+
+  const nodeName = step.node_name || byId(step.node)?.name || step.node;
+  const evals = step.evaluations || [];
+  const chosenList = evals.filter(e => e.decision === 'chosen');
+  const rejectedList = evals.filter(e => e.decision === 'rejected');
+
+  let breakdown = `<b>Step ${step.step}:</b> Expanded <b>${nodeName}</b>. `;
+  if (chosenList.length > 0) {
+    breakdown += `<span style="color:#32c6a4">✔ Picked: ${chosenList.map(c => esc(byId(c.to)?.name || c.to)).join(', ')}</span> `;
+  }
+  if (rejectedList.length > 0) {
+    breakdown += `<span style="color:#ff6b78;margin-left:6px">✖ Pruned: ${rejectedList.map(r => `${esc(byId(r.to)?.name || r.to)} (${esc(r.reason)})`).join('; ')}</span>`;
+  }
+  if (evals.length === 0) {
+    breakdown += step.summary || 'Inspecting telemetry...';
+  }
+
+  textEl.innerHTML = breakdown;
+  addLogEntry(`<b>${nodeName}</b> · ${step.summary || breakdown.replace(/<[^>]+>/g,'')}`);
+}
+
+function videoPlay() {
+  if (isPlaying) return;
+  if (playbackStepIndex >= playbackTrace.length - 1) {
+    playbackStepIndex = 0;
+    renderPlaybackStep(0);
+  }
+  isPlaying = true;
+  updateScrubberUI();
+  scheduleNextStep();
+}
+
+function videoPause() {
+  isPlaying = false;
+  if (playbackTimer) clearTimeout(playbackTimer);
+  updateScrubberUI();
+}
+
+function videoTogglePlay() {
+  if (isPlaying) videoPause();
+  else videoPlay();
+}
+
+function videoReplay() {
+  videoPause();
+  playbackStepIndex = 0;
+  renderPlaybackStep(0);
+  videoPlay();
+}
+
+function videoStepNext() {
+  videoPause();
+  if (playbackStepIndex < playbackTrace.length - 1) {
+    renderPlaybackStep(playbackStepIndex + 1);
+  }
+}
+
+function videoStepPrev() {
+  videoPause();
+  if (playbackStepIndex > 0) {
+    renderPlaybackStep(playbackStepIndex - 1);
+  }
+}
+
+function videoSeek(val) {
+  videoPause();
+  renderPlaybackStep(parseInt(val, 10));
+}
+
+function setSpeed(spd) {
+  currentSpeed = spd;
+  document.querySelectorAll('.speed-pill').forEach(b => b.classList.remove('active'));
+  document.querySelector('#spd' + spd.charAt(0).toUpperCase() + spd.slice(1))?.classList.add('active');
+  if (isPlaying) {
+    if (playbackTimer) clearTimeout(playbackTimer);
+    scheduleNextStep();
+  }
+}
+
+function scheduleNextStep() {
+  if (!isPlaying) return;
+  playbackTimer = setTimeout(() => {
+    if (!isPlaying) return;
+    if (playbackStepIndex < playbackTrace.length - 1) {
+      playbackStepIndex++;
+      renderPlaybackStep(playbackStepIndex);
+      scheduleNextStep();
+    } else {
+      videoPause();
+    }
+  }, SPEED_CONFIG[currentSpeed].delay);
+}
+
+function resetPlayback() {
+  videoPause();
+  playbackTrace = [];
+  playbackStepIndex = 0;
+  currentRunResult = null;
+  document.querySelector('#videoScrubber').max = 0;
+  document.querySelector('#videoScrubber').value = 0;
+  document.querySelector('#stepCounter').textContent = 'Step 0 / 0';
+  document.querySelector('#playbackBadge').textContent = 'STANDBY';
+  document.querySelector('#playbackBadge').className = 'status-badge';
+  document.querySelector('#telemetryText').innerHTML = '<b>Ready:</b> Select parameters and run search to track path exploration.';
+}
+
+// User Actions
+async function search(algs) {
+  busyState(true);
+  videoPause();
+  document.querySelector('#resultsArea').innerHTML = '<div class="empty">Evaluating telemetry graph and tracking decisions…</div>';
+
+  for (const id of ['mHops', 'mCost', 'mExpanded']) {
+    document.querySelector('#' + id).textContent = '—';
+  }
+
+  try {
+    const res = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenario_id: scenario.id,
+        start: document.querySelector('#startNode').value,
+        goal: document.querySelector('#goalNode').value,
+        algorithms: algs
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Search failed');
+
+    results = data.results;
+    showResults();
+
+    const chosenAlg = document.querySelector('#algorithm').value;
+    const r = results[chosenAlg] || results[algs[0]];
+    displayMetrics(r);
+
+    if (r && r.trace) {
+      setupPlayback(r.trace, r);
+    }
+  } catch (e) {
+    toast(e.message);
+    document.querySelector('#resultsArea').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  } finally {
+    busyState(false);
+  }
+}
+
+function runSelected() {
+  return search([document.querySelector('#algorithm').value]);
+}
+
+function compareAll() {
+  return search(ALGS);
+}
+
+function displayMetrics(r) {
+  if (!r) return;
+  activeAlgorithm = r.algorithm;
+      document.querySelector('#mAlgo').textContent = ({
+    greedy: 'Greedy', astar: 'A*'
+  })[r.algorithm] || r.algorithm.toUpperCase();
+  document.querySelector('#mHops').textContent = r.found ? r.hops : 'No path';
+  document.querySelector('#mCost').textContent = r.found ? `${r.review_cost}m` : '—';
+  document.querySelector('#mExpanded').textContent = r.expanded_count;
+  document.querySelector('#concept').textContent = r.note;
+}
+
+function showResults() {
+  const selectedAlg = document.querySelector('#algorithm').value;
+  const rows = ALGS.filter(a => results[a]).map(a => {
+    const r = results[a];
+    const isSelected = a === selectedAlg;
+    return `
+      <tr class="${isSelected ? 'selected-row' : ''}" onclick="selectAlgorithmResult('${a}')">
+        <td>
+          <span class="algoname">${esc(r.name)}</span>
+          <span class="fam">${esc(r.family)}</span>
+        </td>
+        <td>
+          <span class="outcome ${r.found ? '' : 'fail'}">${r.found ? 'Path found' : 'Stuck / No path'}</span>
+        </td>
+        <td>${r.found ? r.hops : '—'}</td>
+        <td>${r.found ? r.review_cost + 'm' : '—'}</td>
+        <td>${r.expanded_count}</td>
+        <td>${r.elapsed_ms} ms</td>
+        <td style="white-space:normal;min-width:180px">${esc(r.guarantee)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  document.querySelector('#resultsArea').innerHTML = `
+    <div class="table-wrap">
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Strategy</th>
+            <th>Outcome</th>
+            <th>Hops</th>
+            <th>Review Effort</th>
+            <th>Expanded</th>
+            <th>Runtime</th>
+            <th>Theoretical Guarantee</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  document.querySelector('#resultMeta').textContent = `${Object.keys(results).length} algorithm(s) compared · Click row to replay`;
+}
+
+function selectAlgorithmResult(alg) {
+  document.querySelector('#algorithm').value = alg;
+  document.querySelector('#algInfo').textContent = descriptions[alg];
+  showResults();
+  const r = results[alg];
+  if (r) {
+    displayMetrics(r);
+    setupPlayback(r.trace, r);
+  }
+}
+
+function inspect(id) {
+  selectedNode = id;
+  const n = byId(id);
+  document.querySelector('#inspector').innerHTML = `
+    <strong style="color:${colorType(n.type)}">${esc(n.name)} · ${esc(n.type)}</strong>
+    <p>${esc(n.detail)}</p>
+    <div class="microbuttons">
+      <button class="micro" onclick="setEndpoint('${esc(id)}','start')">Set as source</button>
+      <button class="micro" onclick="setEndpoint('${esc(id)}','goal')">Set as target</button>
+    </div>
+  `;
+  // Re-render current frame so selected ring is updated
+  if (playbackTrace.length > 0) {
+    renderPlaybackStep(playbackStepIndex);
+  } else {
+    renderStaticGraph();
+  }
+}
+
+function setEndpoint(id, side) {
+  if (side === 'start') document.querySelector('#startNode').value = id;
+  else document.querySelector('#goalNode').value = id;
+  resetPlayback();
+  updateTags();
+  renderStaticGraph();
+  toast(`${byId(id).name} set as ${side}`);
+}
+
+function busyState(b) {
+  document.querySelector('#runBtn').disabled = b;
+  document.querySelector('#compareBtn').disabled = b;
+  document.querySelector('#runBtn').textContent = b ? 'Searching…' : '▶  Run AI Search';
+}
+
+function setupKeyboardShortcuts() {
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      videoTogglePlay();
+    } else if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      videoStepNext();
+    } else if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      videoStepPrev();
+    } else if (e.code === 'KeyR') {
+      e.preventDefault();
+      videoReplay();
+    }
+  });
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function toast(s) {
+  const t = document.querySelector('#toast');
+  t.textContent = s;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2600);
+}
+
+// Select Event Handlers
+document.querySelector('#scenario').onchange = e => {
+  scenario = scenarios.find(s => s.id === e.target.value);
+  renderScenario();
+};
+
+document.querySelector('#startNode').onchange = () => {
+  resetPlayback();
+  updateTags();
+  renderStaticGraph();
+};
+
+document.querySelector('#goalNode').onchange = () => {
+  resetPlayback();
+  updateTags();
+  renderStaticGraph();
+};
+
+document.querySelector('#algorithm').onchange = e => {
+  const alg = e.target.value;
+  document.querySelector('#algInfo').textContent = descriptions[alg];
+  if (results[alg]) {
+    displayMetrics(results[alg]);
+    showResults();
+    setupPlayback(results[alg].trace, results[alg]);
+  } else {
+    resetPlayback();
+    renderStaticGraph();
+  }
+};
+
+// Internals panel sync
+let heatmapEnabled = false;
+function toggleHeatmap(v){ heatmapEnabled = v; if(playbackTrace.length>0) renderPlaybackStep(playbackStepIndex); else renderStaticGraph(); }
+
+function updateInternals(step){
+  const alg = document.querySelector('#algorithm').value;
+  document.querySelector('#intAlgoTag').textContent = 'ALGO: ' + (alg.toUpperCase());
+  const frontierEl = document.querySelector('#frontierView');
+  const visitedEl = document.querySelector('#visitedView');
+  const gnfEl = document.querySelector('#gnfView');
+  if(alg==='greedy'){ frontierEl.textContent = 'PRIORITY QUEUE (min-heap): ordered by h(n) · Informed AI Search'; }
+  else if(alg==='astar'){ frontierEl.textContent = 'PRIORITY QUEUE (min-heap): ordered by f(n)=g(n)+h(n) · Informed AI Search'; }
+  const explored = new Set([document.querySelector('#startNode').value]);
+  for(let i=0;i<=playbackStepIndex;i++){ if(playbackTrace[i]?.node) explored.add(playbackTrace[i].node); }
+  visitedEl.textContent = '{ ' + Array.from(explored).join(', ') + ' }';
+  if(['greedy','astar'].includes(alg)){
+    gnfEl.textContent = 'g(n)=accumulated review effort | h(n)=reverse-hops*minCost | f(n)=g+h. Greedy uses h(n) only; A* uses f(n).';
+  } else {
+    gnfEl.textContent = 'Only Greedy Best-First and A* are used in this lab.';
+  }
+}
+
+// Guided tour
+function startGuidedTour(){
+  alert('GUIDED TOUR:\\n1) Pick scenario/start/goal\\n2) Run A* to see optimal path\\n3) Switch to Internals tab to watch queue/visited/g(n),h(n),f(n)\\n4) Try Algorithm Race (A* vs BFS)\\n5) Try Build-Your-Own Challenge');
+}
+
+// Export
+function exportLabReport(){
+  const alg = document.querySelector('#algorithm').value;
+  const r = results[alg];
+  if(!r){ alert('Run a search first to export a lab report.'); return; }
+  const sName = scenario?.name||'';
+  const startN = byId(document.querySelector('#startNode').value)?.name||'';
+  const goalN = byId(document.querySelector('#goalNode').value)?.name||'';
+  const path = r.found ? r.path.map(id=>byId(id)?.name).join(' → ') : 'No path';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>CyberTrail Lab Report</title><style>body{font-family:Inter,Arial;background:#0b1522;color:#e6eef6;padding:40px}h1{color:#32c6a4}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #1f3242;padding:10px;text-align:left}th{background:#102033}</style></head><body><h1>CyberTrail - Investigation Lab Report</h1><p><b>Scenario:</b> ${sName}</p><p><b>Route:</b> ${startN} → ${goalN}</p><p><b>Algorithm:</b> ${r.name} (${r.family})</p><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td>Outcome</td><td>${r.found?'Path found':'No path'}</td></tr><tr><td>Hops</td><td>${r.hops||'-'}</td></tr><tr><td>Review Effort</td><td>${r.review_cost||'-'}m</td></tr><tr><td>Nodes Expanded</td><td>${r.expanded_count}</td></tr><tr><td>Runtime</td><td>${r.elapsed_ms} ms</td></tr><tr><td>Guarantee</td><td>${r.guarantee}</td></tr><tr><td>Path</td><td>${path}</td></tr></tbody></table><p style="margin-top:30px;color:#7f93a7">Synthetic evidence graph only · Decision-support & search education</p></body></html>`;
+  const w = window.open('','_blank');
+  w.document.write(html); w.document.close();
+}
+
+// Race Engine
+let raceData = null, raceTimer = null, raceIdx = 0, racePlaying = false;
+
+function runRace() {
+  const a = document.querySelector('#raceA').value, b = document.querySelector('#raceB').value;
+  if (a === b) { alert('Pick two different AI search algorithms for the race.'); return; }
+
+  const nameA = a === 'astar' ? 'A*' : 'Greedy Best-First';
+  const nameB = b === 'astar' ? 'A*' : 'Greedy Best-First';
+  document.querySelector('#raceTitle').textContent = `${nameA} vs ${nameB}`;
+  document.querySelector('#raceAName').textContent = nameA;
+  document.querySelector('#raceBName').textContent = nameB;
+  document.querySelector('#raceModal').style.display = 'flex';
+  document.querySelector('#raceAExp').textContent = 'Loading…';
+  document.querySelector('#raceBExp').textContent = 'Loading…';
+  document.querySelector('#raceACost').textContent = '—';
+  document.querySelector('#raceBCost').textContent = '—';
+
+  fetch('/api/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      scenario_id: scenario.id,
+      start: document.querySelector('#startNode').value,
+      goal: document.querySelector('#goalNode').value,
+      algorithms: [a, b]
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    raceData = {
+      a: { res: d.results[a], svg: 'raceSvgA', exp: 'raceAExp', cost: 'raceACost', name: nameA },
+      b: { res: d.results[b], svg: 'raceSvgB', exp: 'raceBExp', cost: 'raceBCost', name: nameB }
+    };
+    raceReplay();
+  })
+  .catch(err => {
+    toast('Race search failed: ' + err.message);
+  });
+}
+
+function closeRace() {
+  racePlaying = false;
+  if (raceTimer) clearTimeout(raceTimer);
+  document.querySelector('#raceModal').style.display = 'none';
+}
+
+function raceReplay() {
+  racePlaying = false;
+  if (raceTimer) clearTimeout(raceTimer);
+  raceIdx = 0;
+  raceRender();
+  raceTogglePlay();
+}
+
+function raceTogglePlay() {
+  if (racePlaying) {
+    racePlaying = false;
+    if (raceTimer) clearTimeout(raceTimer);
+    document.querySelector('#racePlayBtn').textContent = '▶ Play';
+  } else {
+    const maxSteps = Math.max(raceData?.a?.res?.trace?.length || 0, raceData?.b?.res?.trace?.length || 0);
+    if (raceIdx >= maxSteps - 1 && maxSteps > 0) {
+      raceIdx = 0;
+    }
+    racePlaying = true;
+    document.querySelector('#racePlayBtn').textContent = '⏸ Pause';
+    raceStep();
+  }
+}
+
+function raceStep() {
+  if (!racePlaying || !raceData) return;
+  raceRender();
+  const maxSteps = Math.max(raceData.a.res.trace?.length || 0, raceData.b.res.trace?.length || 0);
+  if (raceIdx < maxSteps - 1) {
+    raceIdx++;
+    raceTimer = setTimeout(raceStep, 500);
+  } else {
+    racePlaying = false;
+    document.querySelector('#racePlayBtn').textContent = '▶ Play';
+  }
+}
+
+function raceRender() {
+  if (!raceData) return;
+  ['a', 'b'].forEach(key => {
+    const rd = raceData[key];
+    const res = rd.res;
+    const svgEl = document.querySelector('#' + rd.svg);
+    const trace = res.trace || [];
+    const state = getFrameStateForStep(res, raceIdx);
+    
+    renderSvgGraph(svgEl, state, scenario, { interactive: false });
+
+    const totalExpanded = res.expanded_count || trace.length;
+    const currentExp = Math.min(state.exploredNodes.size, totalExpanded);
+    document.querySelector('#' + rd.exp).textContent = state.isComplete ? `${res.expanded_count} (final)` : `${currentExp} / ${totalExpanded}`;
+    
+    if (state.isComplete) {
+      document.querySelector('#' + rd.cost).innerHTML = res.found ? 
+        `<b style="color:#36ebbc">${res.review_cost}m (${res.hops} hops)</b>` : 
+        `<b style="color:#ff6b78">No path found</b>`;
+    } else {
+      document.querySelector('#' + rd.cost).textContent = 'Searching…';
+    }
+  });
+}
+
+// Challenge
+let challengeState=null;
+function initChallenge(){
+  const sel=document.querySelector('#challengeScenario');
+  if(sel.options.length===0 && scenarios.length){ sel.innerHTML=scenarios.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join(''); }
+  if(scenario){ sel.value=scenario.id; }
+  populateChallengeNodes();
+}
+function populateChallengeNodes(){
+  const sc=scenarios.find(s=>s.id===document.querySelector('#challengeScenario').value)||scenario;
+  const sSel=document.querySelector('#challengeStart'), gSel=document.querySelector('#challengeGoal');
+  const opts=sc.nodes.map(n=>`<option value="${esc(n.id)}">${esc(n.name)} · ${esc(n.type)}</option>`).join('');
+  sSel.innerHTML=opts; gSel.innerHTML=opts;
+  sSel.value=sc.start; gSel.value=sc.goal;
+  document.querySelector('#challengeTags').textContent='START: '+byId(sSel.value)?.name.toUpperCase()+' | GOAL: '+byId(gSel.value)?.name.toUpperCase();
+}
+document.querySelector('#challengeScenario').onchange=populateChallengeNodes;
+document.querySelector('#challengeStart').onchange=()=>document.querySelector('#challengeTags').textContent='START: '+byId(document.querySelector('#challengeStart').value)?.name.toUpperCase()+' | GOAL: '+byId(document.querySelector('#challengeGoal').value)?.name.toUpperCase();
+document.querySelector('#challengeGoal').onchange=document.querySelector('#challengeStart').onchange;
+function startChallenge(){ challengeState={built:[],sc:scenarios.find(s=>s.id===document.querySelector('#challengeScenario').value)||scenario}; document.querySelector('#challengePath').textContent='Path: '+challengeState.sc.start; challengeState.built=[challengeState.sc.start]; document.querySelector('#challengeResult').textContent='Challenge started. Click adjacent nodes to extend your path.'; }
+function resetChallenge(){ startChallenge(); }
+function checkChallenge(){
+  if(!challengeState||challengeState.built.length<2){ document.querySelector('#challengeResult').textContent='Build a path of at least 2 nodes.'; return; }
+  const sc=challengeState.sc, built=challengeState.built;
+  const goal=document.querySelector('#challengeGoal').value;
+  if(built[built.length-1]!==goal){ document.querySelector('#challengeResult').textContent='Your path does not reach the goal. Extend to '+byId(goal)?.name+'.'; return; }
+  let cost=0; for(let i=0;i<built.length-1;i++){ const e=sc.edges.find(ed=>ed.from===built[i]&&ed.to===built[i+1]); if(e) cost+=Number(e.cost); }
+  document.querySelector('#challengeResult').innerHTML='Your path reaches goal! <b style="color:#32c6a4">Total review effort: '+cost+'m</b> over '+(built.length-1)+' hop(s). Compare with A*/UCS optimal.';
+}
+function revealChallenge(){
+  const sc=scenarios.find(s=>s.id===document.querySelector('#challengeScenario').value)||scenario;
+  const s=document.querySelector('#challengeStart').value, g=document.querySelector('#challengeGoal').value;
+  fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scenario_id:sc.id,start:s,goal:g,algorithms:['astar','ucs']})}).then(r=>r.json()).then(d=>{
+    const best = d.results.astar?.found?d.results.astar:d.results.ucs;
+    if(best?.found){ document.querySelector('#challengeResult').innerHTML='Optimal (A*/UCS): <b style="color:#32c6a4">'+best.path.map(id=>byId(id)?.name).join(' → ')+'</b> | '+best.review_cost+'m | '+best.hops+' hops'; }
+    else document.querySelector('#challengeResult').textContent='No path found by optimal algorithms.';
+  });
+}
+
+init();
+</script>
+</body>
+</html>

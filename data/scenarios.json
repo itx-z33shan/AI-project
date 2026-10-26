@@ -1,0 +1,244 @@
+[
+  {
+    "id": "phishing-finance",
+    "name": "Phishing → Finance database",
+    "description": "Trace a synthetic phishing alert through identity and endpoint evidence toward a critical finance asset.",
+    "start": "phish-alert",
+    "goal": "finance-db",
+    "nodes": [
+      {
+        "id": "phish-alert",
+        "name": "Phishing alert",
+        "type": "Alert",
+        "x": 75,
+        "y": 245,
+        "detail": "Reported suspicious email with a link; synthetic alert anchor."
+      },
+      {
+        "id": "jsmith",
+        "name": "j.smith",
+        "type": "Identity",
+        "x": 245,
+        "y": 245,
+        "detail": "User account associated with the reported email."
+      },
+      {
+        "id": "ws17",
+        "name": "WS-17",
+        "type": "Endpoint",
+        "x": 410,
+        "y": 245,
+        "detail": "Employee workstation with sample endpoint events."
+      },
+      {
+        "id": "powershell",
+        "name": "PowerShell",
+        "type": "Process",
+        "x": 570,
+        "y": 165,
+        "detail": "Unusual script process in synthetic event telemetry."
+      },
+      {
+        "id": "filesrv",
+        "name": "File server",
+        "type": "Server",
+        "x": 570,
+        "y": 355,
+        "detail": "Internal file server with a related access event."
+      },
+      {
+        "id": "admin01",
+        "name": "admin-01",
+        "type": "Identity",
+        "x": 735,
+        "y": 105,
+        "detail": "Privileged account; verify before assuming compromise."
+      },
+      {
+        "id": "jumpbox",
+        "name": "Jump host",
+        "type": "Endpoint",
+        "x": 735,
+        "y": 355,
+        "detail": "Administrative jump host with a sample login relationship."
+      },
+      {
+        "id": "c2domain",
+        "name": "Unknown domain",
+        "type": "Network",
+        "x": 735,
+        "y": 500,
+        "detail": "Unclassified external destination in synthetic network events."
+      },
+      {
+        "id": "dc01",
+        "name": "DC-01",
+        "type": "Server",
+        "x": 890,
+        "y": 210,
+        "detail": "Domain controller; high-impact asset in this example graph."
+      },
+      {
+        "id": "finance-db",
+        "name": "Finance DB",
+        "type": "Critical Asset",
+        "x": 1050,
+        "y": 210,
+        "detail": "Critical finance database; selected investigation target."
+      },
+      {
+        "id": "dns-event",
+        "name": "DNS event",
+        "type": "Network",
+        "x": 410,
+        "y": 495,
+        "detail": "Related DNS lookup, shown as a secondary evidence branch."
+      },
+      {
+        "id": "cloud-store",
+        "name": "Cloud storage",
+        "type": "Critical Asset",
+        "x": 1035,
+        "y": 475,
+        "detail": "External storage destination in the illustrative graph."
+      },
+      {
+        "id": "vpn-gw",
+        "name": "VPN gateway",
+        "type": "Network",
+        "x": 245,
+        "y": 455,
+        "detail": "Alternative route to an identity access event."
+      },
+      {
+        "id": "portal-decoy",
+        "name": "Lookalike portal",
+        "type": "Network",
+        "x": 1000,
+        "y": 330,
+        "detail": "Low-confidence lookalike portal lead. A deliberate synthetic decoy that illustrates why local greedy improvement can be misleading."
+      }
+    ],
+    "edges": [
+      {
+        "from": "phish-alert",
+        "to": "jsmith",
+        "relation": "email to user",
+        "cost": 1,
+        "confidence": 0.94
+      },
+      {
+        "from": "jsmith",
+        "to": "ws17",
+        "relation": "user logged in",
+        "cost": 2,
+        "confidence": 0.91
+      },
+      {
+        "from": "ws17",
+        "to": "powershell",
+        "relation": "process spawned",
+        "cost": 2,
+        "confidence": 0.88
+      },
+      {
+        "from": "powershell",
+        "to": "admin01",
+        "relation": "credential access lead",
+        "cost": 4,
+        "confidence": 0.72
+      },
+      {
+        "from": "admin01",
+        "to": "dc01",
+        "relation": "admin sign-in",
+        "cost": 1,
+        "confidence": 0.9
+      },
+      {
+        "from": "dc01",
+        "to": "finance-db",
+        "relation": "database access",
+        "cost": 2,
+        "confidence": 0.86
+      },
+      {
+        "from": "powershell",
+        "to": "filesrv",
+        "relation": "file activity lead",
+        "cost": 2,
+        "confidence": 0.84
+      },
+      {
+        "from": "filesrv",
+        "to": "jumpbox",
+        "relation": "SMB session",
+        "cost": 2,
+        "confidence": 0.8
+      },
+      {
+        "from": "jumpbox",
+        "to": "dc01",
+        "relation": "remote admin session",
+        "cost": 2,
+        "confidence": 0.76
+      },
+      {
+        "from": "powershell",
+        "to": "c2domain",
+        "relation": "outbound connection",
+        "cost": 1,
+        "confidence": 0.78
+      },
+      {
+        "from": "c2domain",
+        "to": "cloud-store",
+        "relation": "possible transfer",
+        "cost": 3,
+        "confidence": 0.6
+      },
+      {
+        "from": "ws17",
+        "to": "dns-event",
+        "relation": "DNS query",
+        "cost": 1,
+        "confidence": 0.87
+      },
+      {
+        "from": "dns-event",
+        "to": "c2domain",
+        "relation": "domain resolution",
+        "cost": 2,
+        "confidence": 0.68
+      },
+      {
+        "from": "jsmith",
+        "to": "vpn-gw",
+        "relation": "VPN session",
+        "cost": 2,
+        "confidence": 0.82
+      },
+      {
+        "from": "vpn-gw",
+        "to": "admin01",
+        "relation": "privileged access lead",
+        "cost": 5,
+        "confidence": 0.55
+      },
+      {
+        "from": "admin01",
+        "to": "portal-decoy",
+        "relation": "unverified portal lead",
+        "cost": 1,
+        "confidence": 0.34
+      },
+      {
+        "from": "ws17",
+        "to": "dc01",
+        "relation": "direct remote session lead",
+        "cost": 10,
+        "confidence": 0.61
+      }
+    ]
+  }
+]
