@@ -42,7 +42,7 @@ def run_search():
         return jsonify(error="Choose at least one search algorithm."), 400
     algorithms = [a for a in algorithms if a in ALGORITHMS]
     if not algorithms:
-        return jsonify(error="Select Greedy Best-First or A*."), 400
+        return jsonify(error="Select at least one supported search algorithm."), 400
     node_ids = {node["id"] for node in scenario["nodes"]}
     if start not in node_ids or goal not in node_ids:
         return jsonify(error="Start and target must be nodes in the selected evidence graph."), 400
