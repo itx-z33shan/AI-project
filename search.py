@@ -9,8 +9,12 @@ from itertools import count
 from time import perf_counter
 
 ALGORITHMS = {
-    "greedy": {"name":"Greedy Best-First Search", "family":"Informed AI Search", "guarantee":"Goal-directed using heuristic h(n); not guaranteed least-cost"},
-    "astar": {"name":"A* Search", "family":"Informed AI Search", "guarantee":"Least review-effort path with admissible heuristic f(n)=g(n)+h(n)"},
+    "bfs": {"name":"Breadth-First Search", "family":"Uninformed Search", "guarantee":"Fewest evidence links (hops); ignores review effort differences"},
+    "dfs": {"name":"Depth-First Search", "family":"Uninformed Search", "guarantee":"Finds a route, but not necessarily the fewest links or least effort"},
+    "ucs": {"name":"Uniform-Cost Search", "family":"Uninformed Search", "guarantee":"Least summed review effort for positive edge costs"},
+    "greedy": {"name":"Greedy Best-First Search", "family":"Informed Search", "guarantee":"Goal-directed using heuristic h(n); not guaranteed least-cost"},
+    "astar": {"name":"A* Search", "family":"Informed Search", "guarantee":"Least review-effort path with admissible heuristic f(n)=g(n)+h(n)"},
+    "hill": {"name":"Hill Climbing", "family":"Local Search", "guarantee":"Locally greedy; can stop at a local optimum or dead end"},
 }
 
 

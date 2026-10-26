@@ -42,7 +42,7 @@ def run_search():
         return jsonify(error="Choose at least one search algorithm."), 400
     algorithms = [a for a in algorithms if a in ALGORITHMS]
     if not algorithms:
-        return jsonify(error="Select Greedy Best-First or A*."), 400
+        return jsonify(error="Select at least one supported search algorithm."), 400
     node_ids = {node["id"] for node in scenario["nodes"]}
     if start not in node_ids or goal not in node_ids:
         return jsonify(error="Start and target must be nodes in the selected evidence graph."), 400
@@ -57,6 +57,14 @@ def run_search():
 @app.get("/health")
 def health():
     return {"status":"ok","service":"CyberTrail Investigation Search"}
+
+
+@app.after_request
+def add_cache_headers(response):
+    """Never let browsers/proxies serve a stale UI build."""
+    if response.mimetype in {"text/html", "text/css", "application/javascript", "text/javascript"}:
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+    return response
 
 
 if __name__ == "__main__":
